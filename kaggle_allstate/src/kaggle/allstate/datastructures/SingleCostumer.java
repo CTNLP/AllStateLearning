@@ -42,6 +42,22 @@ public class SingleCostumer
 	{
 		return costumer_ID;
 	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		StringBuilder builder = new StringBuilder();
+		builder.append("SingleCostumer [costumer_ID=");
+		builder.append(costumer_ID);
+		builder.append(", observations=");
+		builder.append(observations);
+		builder.append(", sale=");
+		builder.append(sale);
+		builder.append("]");
+		return builder.toString();
+	}
 	/**
 	 * 
 	 */

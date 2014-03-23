@@ -23,6 +23,66 @@ public class SingleObservation
 	 * 
 	 */
 	private final String a;
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString()
+	{
+		StringBuilder builder = new StringBuilder();
+		builder.append("SingleObservation [c=");
+		builder.append(c);
+		builder.append(", b=");
+		builder.append(b);
+		builder.append(", a=");
+		builder.append(a);
+		builder.append(", durationPrevious=");
+		builder.append(durationPrevious);
+		builder.append(", cPrevious=");
+		builder.append(cPrevious);
+		builder.append(", married=");
+		builder.append(married);
+		builder.append(", ageYoungest=");
+		builder.append(ageYoungest);
+		builder.append(", ageOldest=");
+		builder.append(ageOldest);
+		builder.append(", riskFactor=");
+		builder.append(riskFactor);
+		builder.append(", carValue=");
+		builder.append(carValue);
+		builder.append(", carAge=");
+		builder.append(carAge);
+		builder.append(", homeOwner=");
+		builder.append(homeOwner);
+		builder.append(", groupSize=");
+		builder.append(groupSize);
+		builder.append(", location=");
+		builder.append(location);
+		builder.append(", state=");
+		builder.append(state);
+		builder.append(", MINUTES_IN_A_DAY=");
+		builder.append(MINUTES_IN_A_DAY);
+		builder.append(", minutesSinceZero=");
+		builder.append(minutesSinceZero);
+		builder.append(", day=");
+		builder.append(day);
+		builder.append(", isSale=");
+		builder.append(isSale);
+		builder.append(", shoppingPointnumber=");
+		builder.append(shoppingPointnumber);
+		builder.append(", d=");
+		builder.append(d);
+		builder.append(", e=");
+		builder.append(e);
+		builder.append(", f=");
+		builder.append(f);
+		builder.append(", g=");
+		builder.append(g);
+		builder.append(", cost=");
+		builder.append(cost);
+		builder.append("]");
+		return builder.toString();
+	}
 	/**
 	 * 
 	 */
