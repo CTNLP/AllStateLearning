@@ -71,8 +71,17 @@ public class SingleCostumer
 			this.observations.set(so.getShoppingPointnumber(), so);
 		}
 	}
-	
-	public double rdf(SingleCostumer to, int fromEntry, int upToEntry, double[] weights, double[] es)
+	/**
+	 * 
+	 *
+	 * @param to
+	 * @param fromEntry
+	 * @param upToEntry
+	 * @param weights
+	 * @param es
+	 * @return
+	 */
+	public double rdf(SingleCostumer to, int fromEntry, int upToEntry, double[][] weights, double[][] es)
 	{
 		double value = 0.0;
 		for(int i=fromEntry;i<upToEntry;++i)
@@ -81,9 +90,24 @@ public class SingleCostumer
 			SingleObservation second = this.get(i);
 			if(first == null || second == null)
 			{continue;}
-			value += first.makeRDF(second,weights,es);
+			double[] w = get(weights,i);
+			double[] e = get(es,i);
+			if(w != null && e != null)
+			{value += first.makeRDF(second,w,e);}
 		}
 		return value;
+	}
+	/**
+	 *
+	 * @param es
+	 * @param i
+	 * @return
+	 */
+	private double[] get(double[][] ws, int l)
+	{
+		if(l < 0 || ws.length <= l)
+		{return null;}
+		return ws[l];
 	}
 	/**
 	 *

@@ -2,9 +2,10 @@
  * 
  */
 package kaggle.allstate.datastructures;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
 /**
  * @author Christoph Teichmann
  * created Mar 22, 2014 5:37:49 PM
@@ -15,7 +16,7 @@ public class DataSet
 	/**
 	 * 
 	 */
-	private final ArrayList<SingleCostumer>  data = new ArrayList<>();
+	private final Int2ObjectOpenHashMap<SingleCostumer>  data = new Int2ObjectOpenHashMap<>();
 	/**
 	 * 
 	 * @param input
@@ -31,10 +32,8 @@ public class DataSet
 			SingleCostumer sc = this.get(num);
 			if(sc == null)
 			{
-				while(data.size() <= num)
-				{data.add(null);}
 				sc = new SingleCostumer(parts);
-				this.data.add(sc);
+				this.data.put(Integer.parseInt(sc.getCostumer_ID()),sc);
 			}
 			sc.addEntry(parts);
 		}
@@ -44,10 +43,16 @@ public class DataSet
 	 * @param num
 	 * @return
 	 */
-	private SingleCostumer get(int num)
+	public SingleCostumer get(int num)
 	{
 		if(num < 0 || num >= this.data.size())
 		{return null;}
 		return this.data.get(num);
 	}
+	/**
+	 *
+	 * @return
+	 */
+	public IntIterator getIntIterator()
+	{return this.data.keySet().iterator();}
 }
