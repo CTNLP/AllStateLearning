@@ -1,0 +1,5 @@
+data_analysis/test.csv
+data_analysis/train.csv
+data_analysis/test.csv.zip
+data_analysis/train.csv.zip
+**/*.pyc
