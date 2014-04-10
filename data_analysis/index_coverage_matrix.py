@@ -1,38 +1,102 @@
 #!/usr/bin/env python
 # encoding: utf-8
 from elasticsearch import Elasticsearch
-from utils import normalize_people_age
-from utils import normalize_car_age
-from utils import step_reduce
+from esquery import Item
+from utils import timespan
 """
     index the data
 
 """
-# replace NAN or '' values with the highest value in this field + 1
-# or a dummy as for car_value and location
-NAN_VALUES = {
-    'C_previous': 5,
-    'duration_previous': 16,
-    'risk_factor': 5,
-    'car_value': 'z',
-    'location': 55555
-    }
-COVERAGE_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-
 es = Elasticsearch()
 
-
-def doc_indexing(doc, id=None, reformat=False):    
-    """ indexing the user document into elasticsearch 
-    """
-    ES_INDEX = "matrix"
-    ES_TYPE = "user-data"
-    if reformat:
-        if id:
-            doc = {'index': ES_INDEX, 'id': id, 'doc_type': ES_TYPE, 'body': doc}
-        else:
-            doc = {'index': ES_INDEX, 'doc_type': ES_TYPE, 'body': doc}
+def doc_indexing(doc, id=None):
+    """ indexing the user document into elasticsearch """
+    ES_INDEX, ES_TYPE = "matrix", "user-data"
+    doc = {'index': ES_INDEX, 'doc_type': ES_TYPE, 'body': doc}
+    if id:
+        doc['id'] = id 
     es.index(**doc)
+
+
+def value_changed_counter(user_vector, item, field):
+    if user_vector:
+        if user_vector[-1][field]['value'] != getattr(item,field):
+            return user_vector[-1][field]['count'] + 1
+        else:
+            return user_vector[-1][field]['count']
+    else:
+        return 0
+
+
+def process_user(id, userdata):
+    # print id, userdata
+
+    user_vector = []
+
+    the_matrix = [] # leave out of changes matrix ['customer_ID', 'shopping_pt', 'record_type', 
+
+    field_names = userdata[0].field_names
+    field_names_matrix = [x for x in field_names if x not in ['customer_ID', 'shopping_pt', 'record_type']]
+    this_step = None
+    initial_time = None
+
+    for item in userdata:
+
+        step_data = {}
+        matrix = []
+
+        for field in field_names:
+            
+            field_value = getattr(item,field)
+
+            # TIMESTAMP as minutes instead of HH:MM
+            if field == 'time':
+                if user_vector:
+                    # print 'rock', timespan(user_vector[-1][field]['value'], getattr(item,field))
+                    field_value = "%s %s " % (timespan(initial_time, getattr(item,field)), getattr(item,field))
+                else:
+                    # initially timestamp
+                    field_value = "%s %s " % (0, getattr(item,field)) 
+                    initial_time = getattr(item,field)
+
+
+            step_data[field] = {
+                'value': field_value,
+                'count': value_changed_counter(user_vector, item, field)
+            }
+
+        # matrix = [[step_data[x]['value'], step_data[x]['count']] for x in field_names_matrix]
+        matrix = ["%s %s" % (step_data[x]['value'], step_data[x]['count']) for x in field_names_matrix]
+        the_matrix.append(matrix)
+        user_vector.append(step_data)    
+
+
+        # print item.key_values()
+        # if this_step != item.step and this_step:
+        #     # coverage changed
+        #     print item.step, item.record_type
+        # else:
+        #     # get step_reduce_vector
+
+
+        # this_step = item.step
+
+
+    # print the keys
+    print ''.join(["%s. %s, " % ((i+1),k) for i,k in enumerate(field_names_matrix)])
+    print 
+
+    # the values of the vector
+    for i,m in enumerate(the_matrix):
+        if i == len(the_matrix)-1:
+            print '-'*89
+        # print "%s. \t\t" % i, ''.join(["%s. %s, \t" % ((in+1),k) for in,k in enumerate(m)])
+        print "%s. \t\t" % i, ''.join(["%s, \t" % k for k in m])
+    print 
+    print 
+
+
+
 
 
 def read_and_index():
@@ -43,77 +107,32 @@ def read_and_index():
 
     """
     with open('train.csv', 'r') as f:
+
         lines = f.readlines()
-
-        field_names = [x.strip() for x in lines[0][:-1].split(',')]        
+        field_names = [x.strip() for x in lines[0][:-1].split(',')] + ['step']        
         field_data = lines[1:]        
-        steps, counter, coverage_opts, some_values = [], 0, {}, {}
 
-        for i,line in enumerate(field_data):
+        customer_steps = {}
+        this_customer_ID = None
 
-            step_values = line[:-1].split(',')
+        for line in field_data[0:200]:            
+            item = Item(line, field_names)
+            data = customer_steps.get(item.customer_ID, [])            
+            data.append(item)
+            customer_steps[item.customer_ID] = data
 
-            for (name, value) in zip(field_names, step_values):
-
-                # change values to int or replace the unknowns to an extra
-                # category e.g. 'risk_factor' values from 1-4 and if unknown 5
-                try:
-                    value = int(value)
-                except:
-                    if value == '' or value == 'NA':
-                        value = NAN_VALUES[name]                
-
-                # reduce to groups of range or prettify some values
-                # e.g. range of age (car|youngest..)  
+            if this_customer_ID != item.customer_ID and this_customer_ID:
+                # print "last:%s, next:%s" % (this_customer_ID, item.customer_ID)
+                # process all steps for the user and index
+                process_user(this_customer_ID, customer_steps[this_customer_ID])
 
 
+            this_customer_ID = item.customer_ID
 
-                if name == 'age_youngest' or name == 'age_oldest':
-                    if name not in some_values:
-                        some_values[name] = normalize_people_age(value)
-
-                if name == 'group_size':
-                    some_values[name] = value 
-
-                if name == 'married_couple':
-                    some_values[name] = value 
-
-                if name == 'state':
-                    some_values[name] = value 
+        # print customer_steps
+        print 'cool'
 
 
-
-
-                # collect values of the coverage options A, B, C, D ...
-                if name in COVERAGE_OPTIONS:
-                    coverage_opts[name] = value
-
-
-
-            step = ''.join([str(coverage_opts[x]) for x in COVERAGE_OPTIONS])
-
-            if step_values[2] == '1':
-                # step_values[2] shopping_pt = 1 this point is not available
-                # in the testdata!
-
-                # print some_values
-                item = {k:v for k, v in some_values.iteritems()}
-
-                counter, steps = step_reduce(counter, steps, step)
-                item['steps'] = counter
-                # item = {'steps': counter + 1} do not count the shopping_pt
-                # in respect to the testdata, but index it
-                item['shopping_pt_step'] = counter + 1
-
-                for i, val in enumerate(steps):
-                    item[i] = val
-                doc_indexing(item, id=step_values[0], reformat=True)
-                steps, coverage_opts, counter, some_values = [], {}, 0, {}
-
-            else:
-                counter, steps = step_reduce(counter, steps, step)
-                coverage_opts = {}
-            
 
 if __name__ == '__main__':
     # index it
