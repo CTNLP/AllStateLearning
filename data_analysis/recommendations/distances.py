@@ -18,7 +18,6 @@ from math import sqrt
 
 
 def manhattan_distance(rating1, rating2):
-    print rating1, rating2
     """
     abs(x1-x2) + abs(y1-y2) + ...
     """

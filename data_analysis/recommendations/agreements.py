@@ -5,6 +5,7 @@
 
 """
 from math import sqrt
+import json
 
 
 def pearson(rating1, rating2):
@@ -14,10 +15,8 @@ def pearson(rating1, rating2):
 
         If the data is subject to grade-inﬂation (different users
         may be using different scales) use Pearson.
-
         It ranges between -1 and 1 inclusive. 1 indicates perfect agreement.
         -1 indicates perfect disagreement.
-
     """
     # get all keys which are in both ratings
     keys = [key for key in rating1 if key in rating2]
@@ -60,7 +59,6 @@ def cosine_similarity(rating1, rating2):
         similarity to -1 indicate perfect negative similarity.
 
         If the data is sparse consider using Cosine Similarity.
-
     """
 
     r1 = rating1.keys()
@@ -85,63 +83,27 @@ def main():
         check out some examples and compare
 
     """
-    # from data.user_data import users
-    # for (x, y) in [('Angelica', 'Bill'), ('Hailey', 'Veronica'),
-    #     ('Hailey', 'Jordyn'), ('Angelica', 'Jordyn'), ('Hailey', 'Bill')]:
+    with open('../the_data.json', 'r') as f:
+        the_data = json.loads(f.read())
 
-    users = {}
-    import json
-    with open('../data/user_queries.json', 'r') as f:
-        users = json.loads(f.read())
+    user_data = the_data['data']
+    the_users = json.loads(the_data['user_ids_list'])
+    some = [(the_users[0], other) for other in the_users] 
 
+    def p(vector):
+        vector = json.loads(vector)
+        return {field: vector[i] for i,field in enumerate(the_data['vector_fields'])}
 
+    step = '1'
 
-    k = range(0, len(users))
+    for (x, y) in some:
+        print "pearson: %s %s %s" % (x, y, pearson(p(user_data[x][step]), p(user_data[y][step])))
+        print "cosine:  %s %s %s" % (x, y, cosine_similarity(p(user_data[x][step]), p(user_data[y][step])))
 
-    niceterms = []
-
-    for x in k:
-        for y in k:
-            x = str(x)
-            y = str(y)
-
-            if x != y:
-                # if pearson(users[x], users[y]) != 0:
-                #     print 'pearson', x, y, pearson(users[x], users[y])
-                try:
-                    cos_sim_val = cosine_similarity(users[x]['qterms'], users[y]['qterms'])
-                except:
-                    cos_sim_val = 55
-
-                if cos_sim_val > 0.98 and cos_sim_val < 1.0:
-                    # print '------------------------------------------------'
-                    # print 'cosin', x, y, cos_sim_val
-
-                    for uxdq in users[x]['qdetails'].keys():
-                        if uxdq in users[y]['qdetails']:
-
-                            if uxdq not in niceterms:
-                                niceterms.append(uxdq)
-
-                            # print 'URL_DOMAIN'
-                            # print users[x]['qdetails'][uxdq]['URL_DOMAIN']
-                            # print users[y]['qdetails'][uxdq]['URL_DOMAIN']
-                            # print
-
-                            # print 'Clicks'
-                            # print users[x]['qdetails'][uxdq]['Clicks']
-                            # print users[y]['qdetails'][uxdq]['Clicks']
-
-                    # print
-            # print "pearson: %s %s %s" % (x, y, pearson(users[x], users[y]))
-            # print "cosine:  %s %s %s" % (x, y, cosine_similarity(users[x], users[y]))
-            # print
-    yield niceterms
 
 
 if __name__ == '__main__':
     import os, sys
     path_to_project = '/'.join(os.path.realpath(__file__).split('/')[:-2])
     sys.path.append(path_to_project)
-    for x in main():
-        print x
+    main()
