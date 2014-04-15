@@ -2,6 +2,29 @@
 # encoding: utf-8
 from string import letters
 from dateutil import parser
+import json
+
+
+def decissioness(timeinminutes):
+    if timeinminutes < 2:
+        return 1
+    elif timeinminutes < 5:
+        return 2
+    elif timeinminutes < 15:
+        return 3
+    elif timeinminutes < 60:
+        return 4
+    else:
+        return 5
+
+def value_changed_counter(user_vector, thisfieldvalue, field):
+    if user_vector:
+        if user_vector[-1][field]['value'] != thisfieldvalue:
+            return user_vector[-1][field]['count'] + 1
+        else:
+            return user_vector[-1][field]['count']
+    else:
+        return 0
 
 
 def normalize_people_age(age):
@@ -71,5 +94,30 @@ def print_facets(field, response, tab=1):
     return ''.join(data)[:-1]
 
 
+
+def get_field_and_value(data, fieldname, to=1, examples=5):
+    # get position of the field and extract
+    fromindex = data['vector_fields'].index(fieldname)
+    info = {
+        'fields': data['vector_fields'][fromindex:(fromindex+to)]
+    }
+    for userid in json.loads(data['user_ids_list'])[0:examples]:
+        info[userid] = []
+        for x in range(1, data['data'][userid]['step_count']):
+            vector = json.loads(data['data'][userid][str(x)])
+            info[userid].append(vector[fromindex:(fromindex+to)])
+    return info
+
+
+
+
 if __name__ == '__main__':
     print normalize_age(17)
+
+    with open('the_data.json', 'r') as f:
+           data = json.loads(f.read())   
+    print get_field_and_value(data, 'time', to=2)
+    # print get_field_and_value(data, 'C_previous', to=4, examples=1)
+
+
+
