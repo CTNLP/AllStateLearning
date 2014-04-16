@@ -26,72 +26,67 @@ def computeNearestNeighbor(username, users, distance_algorithm='euclidean'):
     return distances
 
 
-def recommend(username, users):
-    """
-    Give list of recommendations
-    """
-    # first find nearest neighbor
-    nearest = computeNearestNeighbor(username,
-                                     users,
-                                     distance_algorithm='minkowski')
-
-    for i in range(len(nearest)):
-        the_nearest = nearest[i][1]
-
-        recommendations = []
-        # now find bands nearest neighbor rated that user didn't and recommend
-        neighborRatings = users[the_nearest]
-        userRatings = users[username]
-
-        for artist in neighborRatings:
-            if not artist in userRatings:
-                recommendations.append((artist, neighborRatings[artist]))
-
-        if recommendations:
-            # using the fn sorted for variety - sort is more efficient
-            return i, sorted(recommendations, key=lambda artistTuple: artistTuple[1],
-                reverse = True)
-
-    return i, 'No recommendations'
-
 
 def main():
     """
         check out some examples and compare
 
     """
-
-    # from data.user_data import users
-    # users = {
-    #     "Angelica": {
-    #         "Blues Traveler": 3.5, "Broken Bells": 2.0, "Norah Jones": 4.5,
-    #         "Phoenix": 5.0, "Slightly Stoopid": 1.5, "The Strokes": 2.5,
-    #         "Vampire Weekend": 2.0},
-    #     "Bill": {
-    #         "Blues Traveler": 2.0, "Broken Bells": 3.5, "Deadmau5": 4.0,
-    #         "Phoenix": 2.0, "Slightly Stoopid": 3.5, "Vampire Weekend": 3.0},
-
-    # for x in ['Hailey', 'Chan', 'Sam', 'Dan', 'Jordyn', 'Bill', 'Angelica']:
-    #     print "recommends for %s: \t\t%s  %s" % (x, "%s %s" % recommend(x, users), users[x])
     users = {}
 
     with open('../the_data.json', 'r') as f:
         the_data = json.loads(f.read())
 
     user_data = the_data['data']
-    the_users = json.loads(the_data['user_ids_list'])
+    the_user_ids = json.loads(the_data['user_ids_list'])
     
     def p(vector):
         vector = json.loads(vector)
         return {field: vector[i] for i,field in enumerate(the_data['vector_fields'])}
 
-    step = '1'
-    users = {u: p(user_data[u][step]) for u in the_users}
+    result = {}
+    for step in range(1, 20):
+        step = str(step)
 
-    for user_id in the_users:        
-        print user_id, recommend(user_id, users)        
+        users = {}
+        the_user_ids_for_this_step = []
+        for uid in the_user_ids:
+            try:
+                users[uid] = p(user_data[uid][step])
+                the_user_ids_for_this_step.append(uid)                
+            except:
+                pass
 
-    print 'what do expect to be recommended here?! ...but nice interface to the distances'
+        for user_id in the_user_ids_for_this_step:        
+            nearest = computeNearestNeighbor(user_id,
+                                             users,
+                                             distance_algorithm='minkowski')
+            # print user_id
+            if user_id not in result:
+                result[user_id] = {}
+
+            result[user_id][step] = nearest[:3]
+
+
+
+    # print result
+
+    for u in result.keys():
+        woha = []
+        print '%s, step_count: %s' % (u, user_data[u]['step_count'])
+        ls = result[u].keys()
+        ls.sort()
+        for s in ls: 
+            print s
+            for near in result[u][s]:
+                if near[1] in woha:
+                    ulala = '>'*woha.count(near[1])
+                else:
+                    ulala = ''
+                woha.append(near[1])
+                print '\t'*int(s), '%s %s, %s, step_count: %s' % (ulala, near[1], near[0], user_data[near[1]]['step_count'])
+
+        print
 
 
 if __name__ == '__main__':
