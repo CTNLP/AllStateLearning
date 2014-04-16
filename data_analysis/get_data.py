@@ -94,7 +94,7 @@ def read_and_index():
         customer_steps = {}
         this_customer_ID = None
 
-        for line in field_data[0:200]:            
+        for line in field_data[0:1000]:            
             item = Item(line, field_names)
             data = customer_steps.get(item.customer_ID, [])            
             data.append(item)
